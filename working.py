@@ -1,6 +1,7 @@
 import heapq
 from math import sqrt
 from collections import deque
+import heapq
 
 def dijkstra(grid, start, end):
     rows, cols = len(grid), len(grid[0])
@@ -139,3 +140,133 @@ def dfs(grid, start, end):
         path_list.append(current)
         current = path[current]
     return path_list[::-1] 
+
+
+def swarm(grid, start, end):
+    rows, cols = len(grid), len(grid[0])
+    visited = [[False] * cols for _ in range(rows)]
+    distance = [[float('inf')] * cols for _ in range(rows)]
+    distance[start[0]][start[1]] = 0
+    path = {}
+    
+    def neighbors(r, c):
+        for dr, dc in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < rows and 0 <= nc < cols and not grid[nr][nc]:
+                yield nr, nc
+    
+    def heuristic(a, b):
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
+    
+    pq = [(0, start)]
+    while pq:
+        _, current = heapq.heappop(pq)
+        if visited[current[0]][current[1]]:
+            continue
+        visited[current[0]][current[1]] = True
+        if current == end:
+            break
+        for neighbor in neighbors(*current):
+            alt = distance[current[0]][current[1]] + 1
+            if alt < distance[neighbor[0]][neighbor[1]]:
+                distance[neighbor[0]][neighbor[1]] = alt
+                priority = alt + heuristic(end, neighbor)
+                heapq.heappush(pq, (priority, neighbor))
+                path[neighbor] = current
+    
+    if not visited[end[0]][end[1]]:
+        return []
+    path_list = []
+    while current != start:
+        path_list.append(current)
+        current = path[current]
+    return path_list[::-1]
+
+
+def greedy_best_first(grid, start, end):
+    rows, cols = len(grid), len(grid[0])
+    visited = [[False] * cols for _ in range(rows)]
+    path = {}
+    
+    def neighbors(r, c):
+        for dr, dc in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < rows and 0 <= nc < cols and not grid[nr][nc]:
+                yield nr, nc
+    
+    def heuristic(a, b):
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
+    
+    pq = [(heuristic(start, end), start)]
+    while pq:
+        _, current = heapq.heappop(pq)
+        if visited[current[0]][current[1]]:
+            continue
+        visited[current[0]][current[1]] = True
+        if current == end:
+            break
+        for neighbor in neighbors(*current):
+            if not visited[neighbor[0]][neighbor[1]]:
+                heapq.heappush(pq, (heuristic(end, neighbor), neighbor))
+                path[neighbor] = current
+    
+    if not visited[end[0]][end[1]]:
+        return []
+    path_list = []
+    while current != start:
+        path_list.append(current)
+        current = path[current]
+    return path_list[::-1]
+
+def bidirectional_search(grid, start, end):
+    rows, cols = len(grid), len(grid[0])
+    visited_start = [[False] * cols for _ in range(rows)]
+    visited_end = [[False] * cols for _ in range(rows)]
+    path_start = {}
+    path_end = {}
+    
+    def neighbors(r, c):
+        for dr, dc in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < rows and 0 <= nc < cols and not grid[nr][nc]:
+                yield nr, nc
+    
+    def meet_point():
+        for r in range(rows):
+            for c in range(cols):
+                if visited_start[r][c] and visited_end[r][c]:
+                    return (r, c)
+        return None
+    
+    frontier_start = [start]
+    frontier_end = [end]
+    while frontier_start and frontier_end:
+        current_start = frontier_start.pop(0)
+        visited_start[current_start[0]][current_start[1]] = True
+        for neighbor in neighbors(*current_start):
+            if not visited_start[neighbor[0]][neighbor[1]]:
+                frontier_start.append(neighbor)
+                path_start[neighbor] = current_start
+        
+        current_end = frontier_end.pop(0)
+        visited_end[current_end[0]][current_end[1]] = True
+        for neighbor in neighbors(*current_end):
+            if not visited_end[neighbor[0]][neighbor[1]]:
+                frontier_end.append(neighbor)
+                path_end[neighbor] = current_end
+        
+        meet = meet_point()
+        if meet:
+            
+            path_list = []
+            current = meet
+            while current != start:
+                path_list.append(current)
+                current = path_start[current]
+            path_list.reverse()
+            current = meet
+            while current != end:
+                current = path_end[current]
+                path_list.append(current)
+            return path_list
+    return []
