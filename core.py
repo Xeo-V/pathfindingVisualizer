@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from working import dijkstra, a_star, bfs, dfs
+from working import dijkstra, a_star, bfs, dfs, swarm, greedy_best_first, bidirectional_search
 import threading
 
 class PathfindingVisualizer:
@@ -23,7 +23,7 @@ class PathfindingVisualizer:
         algo_label = tk.Label(control_frame, text="Algorithm:")
         algo_label.pack(side="left")
         
-        algo_dropdown = ttk.Combobox(control_frame, textvariable=self.algorithm, values=["Dijkstra", "A*", "BFS", "DFS"])
+        algo_dropdown = ttk.Combobox(self.master, textvariable=self.algorithm, values=["Dijkstra", "A*", "BFS", "DFS", "Swarm", "Greedy Best-First", "Bidirectional"])
         algo_dropdown.pack(side="left")
         
         start_button = tk.Button(control_frame, text="Set Start", command=self.set_start)
@@ -103,6 +103,12 @@ class PathfindingVisualizer:
                 path = bfs(grid, self.start, self.end)
             elif algorithm == "DFS":
                 path = dfs(grid, self.start, self.end)
+            if algorithm == "Swarm":
+                path = swarm(grid, self.start, self.end)
+            elif algorithm == "Greedy Best-First":
+                path = greedy_best_first(grid, self.start, self.end)
+            elif algorithm == "Bidirectional":
+                path = bidirectional_search(grid, self.start, self.end)
             else:
                 tk.messagebox.showerror("Error", f"Unknown algorithm {algorithm}")
                 return
