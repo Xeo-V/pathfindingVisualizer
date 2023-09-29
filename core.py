@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from working import dijkstra, a_star, bfs, dfs, swarm, greedy_best_first, bidirectional_search
+from working import dijkstra, a_star, bfs, dfs, swarm, greedy_best_first, bidirectional_search, ant_colony_optimization, genetic_algorithm
 import threading
 
 class PathfindingVisualizer:
@@ -23,7 +23,7 @@ class PathfindingVisualizer:
         algo_label = tk.Label(control_frame, text="Algorithm:")
         algo_label.pack(side="left")
         
-        algo_dropdown = ttk.Combobox(self.master, textvariable=self.algorithm, values=["Dijkstra", "A*", "BFS", "DFS", "Swarm", "Greedy Best-First", "Bidirectional"])
+        algo_dropdown = ttk.Combobox(self.master, textvariable=self.algorithm, values=["Dijkstra", "A*", "BFS", "DFS", "Swarm", "Greedy Best-First", "Bidirectional", "Ant Colony Optimization", "Genetic Algorithm",])
         algo_dropdown.pack(side="left")
         
         start_button = tk.Button(control_frame, text="Set Start", command=self.set_start)
@@ -88,13 +88,11 @@ class PathfindingVisualizer:
             if self.start is None or self.end is None:
                 tk.messagebox.showwarning("Warning", "Please set both start and end points.")
                 return
-            
+        
             grid = [[self.grid[row][col].cget("bg") == "black" for col in range(self.cols)] for row in range(self.rows)]
-            
-
+        
             algorithm = self.algorithm.get()
-            
-
+        
             if algorithm == "Dijkstra":
                 path = dijkstra(grid, self.start, self.end)
             elif algorithm == "A*":
@@ -103,25 +101,29 @@ class PathfindingVisualizer:
                 path = bfs(grid, self.start, self.end)
             elif algorithm == "DFS":
                 path = dfs(grid, self.start, self.end)
-            if algorithm == "Swarm":
+            elif algorithm == "Swarm":
                 path = swarm(grid, self.start, self.end)
             elif algorithm == "Greedy Best-First":
                 path = greedy_best_first(grid, self.start, self.end)
             elif algorithm == "Bidirectional":
                 path = bidirectional_search(grid, self.start, self.end)
+            elif algorithm == "Ant Colony Optimization":
+                path = ant_colony_optimization(grid, self.start, self.end, num_ants=10, num_iterations=100)
+            elif algorithm == "Genetic Algorithm":
+                path = genetic_algorithm(grid, self.start, self.end, population_size=10, num_generations=100)
             else:
                 tk.messagebox.showerror("Error", f"Unknown algorithm {algorithm}")
                 return
-            
+        
             if not path:
                 tk.messagebox.showinfo("Info", "No path found.")
                 return
-            
+        
             for row, col in path:
                 self.master.after(0, lambda r=row, c=col: self.grid[r][c].config(bg="blue"))
                 self.master.update_idletasks()
                 self.master.after(50)
-        
+    
         except Exception as e:
             tk.messagebox.showerror("Error", f"An error occurred: {e}")
             
