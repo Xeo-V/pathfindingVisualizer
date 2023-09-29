@@ -2,6 +2,7 @@ import heapq
 from math import sqrt
 from collections import deque
 import heapq
+import random
 
 def dijkstra(grid, start, end):
     rows, cols = len(grid), len(grid[0])
@@ -270,3 +271,59 @@ def bidirectional_search(grid, start, end):
                 path_list.append(current)
             return path_list
     return []
+
+class Ant:
+    def __init__(self, start):
+        self.current_node = start
+        self.path = [start]
+        self.path_length = 0
+
+def initialize_pheromones(graph):
+    pheromones = {}
+    for node in graph:
+        pheromones[node] = {neighbor: 1 for neighbor in graph[node]}
+    return pheromones
+
+def move_ant(ant, graph, pheromones, alpha, beta):
+    current_node = ant.current_node
+    neighbors = set(graph[current_node]) - set(ant.path)
+    
+    if not neighbors:
+        return False  # No available moves
+    
+    probabilities = []
+    for neighbor in neighbors:
+        pheromone = pheromones[current_node][neighbor]
+        heuristic = 1 / graph[current_node][neighbor]  # Assuming graph stores distances
+        probabilities.append((pheromone ** alpha) * (heuristic ** beta))
+    
+    chosen_neighbor = random.choices(list(neighbors), weights=probabilities)[0]
+    ant.path.append(chosen_neighbor)
+    ant.path_length += graph[current_node][chosen_neighbor]
+    ant.current_node = chosen_neighbor
+    return True
+
+def update_pheromones(ant, pheromones, evaporation_rate):
+    for i in range(len(ant.path) - 1):
+        current_node = ant.path[i]
+        next_node = ant.path[i + 1]
+        pheromones[current_node][next_node] = (1 - evaporation_rate) * pheromones[current_node][next_node] + 1 / ant.path_length
+
+def ant_colony_optimization(graph, start, end, num_ants, num_iterations, alpha, beta, evaporation_rate):
+    pheromones = initialize_pheromones(graph)
+    best_path = None
+    best_length = float('inf')
+    
+    for _ in range(num_iterations):
+        ants = [Ant(start) for _ in range(num_ants)]
+        
+        for ant in ants:
+            while ant.current_node != end:
+                move_ant(ant, graph, pheromones, alpha, beta)
+            update_pheromones(ant, pheromones, evaporation_rate)
+            
+            if ant.path_length < best_length:
+                best_path = ant.path
+                best_length = ant.path_length
+    
+    return best_path
